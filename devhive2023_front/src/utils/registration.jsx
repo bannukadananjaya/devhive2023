@@ -3,10 +3,65 @@ import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar'
 import RegRow from '../components/RegRow';
 import Footer from '../components/Footer';
+import {courseSem,reAttempt} from '../api/userApi';
+import { useState,useEffect } from 'react';
 
 const Registration = () => {
     const location = useLocation();
     const semester = new URLSearchParams(location.search).get('sem');
+
+    const getActualSemester = (semesterCode) => {
+        const semesterMap = {
+          sem01: '1',
+          soft01: '10',
+          sem02: '2',
+          sem03: '3',
+          sem04: '4',
+          sem05: '5',
+          sem05ext: '9',
+          sem06: '6',
+          sem07: '7',
+          sem08: '8',
+          // Add more mappings as needed
+        };
+        return semesterMap[semesterCode] || '';
+      };
+
+    const [courses, setCourses] = useState([]);
+    const [reAttempts, setReAttempts] = useState([]);
+    const [checkedCount, setCheckedCount] = useState(0);
+    const [coursRegistration, setCoursRegistration] = useState([]);
+
+    useEffect(() => {
+        const actualSemester = getActualSemester(semester);
+        courseSem(actualSemester).then((res) => {
+            console.log(res);
+            setCourses(res.courses);
+        });
+        reAttempt().then((res) => {
+            console.log('i need this',res);
+            setReAttempts(res.getReAttemptcourses);
+        });
+    }, []);
+
+    const handleCheckboxChange = (isChecked, courseData) => {
+        // Update the count based on the checked status
+        console.log('hjzdjhvbsvgkuhdrg',courseData);
+        isChecked
+          ? setCheckedCount((prevCount) => prevCount + 3)
+          : setCheckedCount((prevCount) => prevCount - 3);
+      
+        //Update coursRegistration based on the checked status
+        // isChecked
+        //   ? setCoursRegistration((prevCoursReg) => [...prevCoursReg, courseData])
+        //   : setCoursRegistration((prevCoursReg) =>
+        //       prevCoursReg.filter((course) => course.Course_Code !== courseData.Course_Code)
+        //     );
+      };
+
+      console.log("Checked Count ", checkedCount);
+        console.log("Checked Courses ", coursRegistration);
+
     return (
         <div>
             <Navbar />
@@ -42,12 +97,20 @@ const Registration = () => {
                                 </tr>
                             </thead>
                             <tbody>
+                                {courses.map((courseCode, index) => (
+                                <RegRow key={index} code={courseCode} sem ={getActualSemester(semester)} onChange={handleCheckboxChange}/>
+                                ))}{
+                                    reAttempts.map((courseCode) => (
+                                        <RegRow key={courseCode} code={courseCode.Course_Code} sem ={getActualSemester(semester)} onChange={handleCheckboxChange}/>
+                                        ))
+
+                                }
+                                {/* <RegRow code="EC6060" />
                                 <RegRow code="EC6060" />
                                 <RegRow code="EC6060" />
                                 <RegRow code="EC6060" />
                                 <RegRow code="EC6060" />
-                                <RegRow code="EC6060" />
-                                <RegRow code="EC6060" />
+                                <RegRow code="EC6060" /> */}
                             </tbody>
                         </table>
                     </div>
@@ -55,7 +118,7 @@ const Registration = () => {
                         <div></div>
                         <div className='d-flex align-content-center'>
                             <h6 style={{ width: "150px" }} className='m-0 mt-2'>Total Credits : </h6>
-                            <input style={{ maxWidth: "50px" }} type="text" className="form-control form-control-sm" value="24" readonly />
+                            <input style={{ maxWidth: "50px" }} type="text" className="form-control form-control-sm" value={checkedCount} readonly />
                         </div>
                         <div>
                             <button className='btn btn-green mx-3'>Save</button>
